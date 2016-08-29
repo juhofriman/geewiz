@@ -2,6 +2,7 @@
 
 (def handlers (atom {}))
 (def types (atom {}))
+(def deps (atom {}))
 
 (defn- arg-count
     "Returns arity of f"
@@ -11,10 +12,14 @@
 
 (defn geewiz-handler
     "Registers handler for type"
-    [entity body]
-    (if (= 2 (arg-count body))
-        (swap! handlers assoc entity body)
-        (throw (IllegalArgumentException. (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector.")))))
+    ([entity body] (geewiz-handler entity [] body))
+    ([entity dependencies body]
+        (if (= 2 (arg-count body))
+            (do
+                (swap! handlers assoc entity body)
+                (swap! deps assoc entity dependencies))
+            (throw (IllegalArgumentException.
+                (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector."))))))
 
 (defn geewiz-register-type
     "Register type"
@@ -33,6 +38,7 @@
     []
     (do
         (reset! handlers {})
+        (reset! deps {})
         (reset! types {})))
 
 (declare geewiz-query)
@@ -41,7 +47,7 @@
     [result sub-handlers]
     (reduce
         (fn [acc {type :type :as handler}]
-            (assoc acc type (geewiz-query handler)))
+            (assoc acc type (geewiz-query handler result)))
         result
         sub-handlers))
 
@@ -50,10 +56,15 @@
     (let [all-fields (map (fn [a] (if (associative? a) (:type a) a)) fields)]
         (select-keys (apply-sub-handlers result (filter associative? fields)) all-fields)))
 
+(defn create-constraints [constraints deps parent]
+    (concat constraints (flatten (map (fn [[parentType field]] [field (get parent field)]) (partition 2 deps)))))
+
+
 (defn geewiz-query
     "Executes geewiz query. Queries should be constructed with (geewiz.parser/parse string)"
-    [{type :type constraints :constraints fields :fields :or {fields [:all]}}]
-    (let [handler (get @handlers type)]
+    ([query] (geewiz-query query {}))
+    ([{type :type constraints :constraints fields :fields :or {fields [:all]}} parent]
+     (let [handler (get @handlers type) deps (get @deps type)]
         (if handler
-            (filter-result (apply handler [constraints fields]) fields)
-            (throw (IllegalArgumentException. (str "No handler for type" type))))))
+            (filter-result (apply handler [(create-constraints constraints deps parent) fields]) fields)
+            (throw (IllegalArgumentException. (str "No handler for type" type)))))))
