@@ -1,5 +1,5 @@
-(defproject geewiz "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject geewiz "0.0.1-SNAPSHOT"
+  :description "Geewiz just might be a library for building graphql like services"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

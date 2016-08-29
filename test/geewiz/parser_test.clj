@@ -12,5 +12,12 @@
                (parse "{ animal(id: 123, name: 'jeppe') { name, breed }}"))))
 
     (testing "nested"
-        (is (= {:type :animal :constraints [:id 1] :fields [:name {:type :legs :constraints [] :fields [:headLeft :headRight :tailLeft :tailRight]}]}
+        (is (= {:type
+                :animal
+                :constraints [:id 1]
+                :fields [
+                    :name
+                    {:type :legs
+                     :constraints []
+                     :fields [:headLeft :headRight :tailLeft :tailRight]}]}
                (parse "{ animal(id: 1) { name, legs() { headLeft, headRight, tailLeft, tailRight }}}")))))

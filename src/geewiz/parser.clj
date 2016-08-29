@@ -33,27 +33,58 @@ integerValue = INTEGER
 <INTEGER> = #'[0-9]*'
 ")
 
+; RAW parsed datastructure:
+; user=> (parse-raw "{cat(id: 1234) {name, breed, friends() { name }}}")
+
+;[:query
+; [:entityQuery
+;  [:entityName "cat"]
+;  [:constraints
+;   [:constraint
+;    [:constrainKey "id"]
+;    [:constraintValue [:integerValue "1234"]]]]
+;  [:fields
+;   [:field "name"]
+;   [:field "breed"]
+;   [:field
+;    [:entityQuery
+;     [:entityName "friends"]
+;     [:constraints]
+;     [:fields [:field "name"]]]]]]]
+
+; Instaparser instance
 (def ql-parser (insta/parser grammar))
 
-(defn parse-raw [i] (ql-parser i))
-
+; For mutual recursion
 (declare map-to-geewiz)
 
-(defn- map-fields [[_ & fields]]
+(defn- map-fields
+    [[_ & fields]]
     (vec (map #(if (-> % second vector?) (map-to-geewiz (second %)) ((comp keyword second) %)) fields)))
 
-(defn map-constraint [[_ [_ key] [_ [type val]]]]
+(defn- map-constraint
+    [[_ [_ key] [_ [type val]]]]
     (let [key-as-keyword (keyword key)]
         (case type
             :stringValue [key-as-keyword val]
             :integerValue [key-as-keyword (read-string val)])))
 
-(defn- map-constraints [[_ & constraints]]
+(defn- map-constraints
+    [[_ & constraints]]
     (vec (flatten (map map-constraint constraints))))
 
-(defn- map-to-geewiz [[_ [_ entityName] constraints fields]]
+(defn- map-to-geewiz
+    [[_ [_ entityName] constraints fields]]
     {:type (keyword entityName)
      :constraints (map-constraints constraints)
      :fields (map-fields fields)})
 
-(defn parse [i] (map-to-geewiz (second (parse-raw i))))
+(defn parse-raw
+    "Parses input raw with instaparse. Should be used from outside only for debugging."
+    [i]
+    (ql-parser i))
+
+(defn parse
+    "Parses input to geewiz internal query structure"
+    [i]
+    (map-to-geewiz (second (parse-raw i))))
