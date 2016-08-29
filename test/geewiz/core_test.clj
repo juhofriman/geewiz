@@ -22,18 +22,27 @@
         ; just a dummy handler returning something predictable
         (geewiz-handler :animal (fn [_ _] {:type :dog :name "Rufus"}))
 
-        (is (= "Rufus" (:name (geewiz-query {:type :animal})))))
+        (is (= "Rufus" (:name (geewiz-query {:type :animal :fields [:name]})))))
 
     (testing "executing handler with constraints"
         (geewiz-handler :animal (fn [[constraintKey constraintValue] _] {:type :dog :id constraintValue :name "Rufus"}))
 
-        (is (= 123 (:id (geewiz-query {:type :animal :constraints [:id 123]})))))
+        (is (= 123 (:id (geewiz-query {:type :animal :constraints [:id 123] :fields [:id]})))))
 
     (testing "executing handler with constraints and fields"
         (geewiz-handler :animal (fn [[constraintKey constraintValue] fields] {:type :dog :id constraintValue :name "Rufus" :breed "Terrier"}))
 
         (let [result (geewiz-query {:type :animal :constraints [:id 123] :fields [:name :breed]})]
-            (is (= #{:name :breed} (set (keys result)))))))
+            (is (= #{:name :breed} (set (keys result))))))
+    (testing "executing nested queries"
+
+        (geewiz-handler :zoo (fn [_ _] {:name "Korkeasaari"}))
+        (geewiz-handler :address (fn [_ a] {:streetAddress "Something" :postalCode 12345 :a a}))
+
+        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :address :constraints [] :fields [:streetAddress :postalCode]}]})]
+            (is (= "Korkeasaari" (:name result)))
+            (is (= "Something" (get-in result [:address :streetAddress])))
+            (is (= 12345 (get-in result [:address :postalCode]))))))
 
 (deftest registering-types
     (testing "no types is no types"

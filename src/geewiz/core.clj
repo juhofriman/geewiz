@@ -35,11 +35,20 @@
         (reset! handlers {})
         (reset! types {})))
 
-(defn- filter-result
-    [result fields]
-    (if (= fields [:all])
+(declare geewiz-query)
+
+(defn- apply-sub-handlers
+    [result sub-handlers]
+    (reduce
+        (fn [acc {type :type :as handler}]
+            (assoc acc type (geewiz-query handler)))
         result
-        (select-keys result fields)))
+        sub-handlers))
+
+(defn filter-result
+    [result fields]
+    (let [all-fields (map (fn [a] (if (associative? a) (:type a) a)) fields)]
+        (select-keys (apply-sub-handlers result (filter associative? fields)) all-fields)))
 
 (defn geewiz-query
     "Executes geewiz query. Queries should be constructed with (geewiz.parser/parse string)"
