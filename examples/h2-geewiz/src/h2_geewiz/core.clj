@@ -47,8 +47,7 @@
 
 (geewiz/geewiz-handler :zoo get-zoo)
 
-;; This does not work currently because g/core does not know how to handle sequences returned from handler
-;(geewiz/geewiz-handler :animal [:zoo :id] get-animals-of-zoo)
+(geewiz/geewiz-handler :animal [:zoo :id] get-animals-of-zoo)
 
 (defn execute
   [query]

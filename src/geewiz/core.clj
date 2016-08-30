@@ -51,10 +51,16 @@
         result
         sub-handlers))
 
-(defn filter-result
+(defn filter-result-object
     [result fields]
     (let [all-fields (map (fn [a] (if (associative? a) (:type a) a)) fields)]
         (select-keys (apply-sub-handlers result (filter associative? fields)) all-fields)))
+
+(defn filter-result
+  [result fields]
+  (if (sequential? result)
+    (map #(filter-result-object % fields) result)
+    (filter-result-object result fields)))
 
 (defn create-constraints [constraints deps parent]
     (concat constraints (flatten (map (fn [[parentType field]] [field (get parent field)]) (partition 2 deps)))))

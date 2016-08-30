@@ -48,7 +48,14 @@
             (is (= "Korkeasaari" (:name result)))
             (is (= "Something" (get-in result [:address :streetAddress])))
             (is (= 1234 (get-in result [:address :id])))
-            (is (= 12345 (get-in result [:address :postalCode]))))))
+            (is (= 12345 (get-in result [:address :postalCode])))))
+
+    (testing "handlers returning collections"
+        (geewiz-handler :zoo (fn [_ _] {:name "Korkeasaari" :id 1234}))
+        (geewiz-handler :animal [:zoo :id] (fn [[_ id] _] [{:name "Dumbo" :breed "Elephant"}, {:name "John" :breed "Pig"}, {:name "Eric" :breed "Mule"}]))
+
+        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :animal :constraints [] :fields [:name]}]})]
+          (is (= (seq? (get result :animal)))))))
 
 (deftest registering-types
     (testing "no types is no types"
