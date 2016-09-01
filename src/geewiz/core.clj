@@ -1,4 +1,5 @@
-(ns geewiz.core)
+(ns geewiz.core
+  (:require [geewiz.parser :as parser]))
 
 (def handlers (atom {}))
 (def types (atom {}))
@@ -41,15 +42,15 @@
         (reset! deps {})
         (reset! types {})))
 
-(declare geewiz-query)
+(declare iterate-query)
 
 (defn- apply-sub-handlers
-    [result sub-handlers]
-    (reduce
-        (fn [acc {type :type :as handler}]
-            (assoc acc type (geewiz-query handler result)))
-        result
-        sub-handlers))
+  [result sub-handlers]
+  (reduce
+    (fn [acc {type :type :as handler}]
+      (assoc acc type (iterate-query handler result)))
+    result
+    sub-handlers))
 
 (defn filter-result-object
     [result fields]
@@ -62,15 +63,20 @@
     (map #(filter-result-object % fields) result)
     (filter-result-object result fields)))
 
-(defn create-constraints [constraints deps parent]
-    (concat constraints (flatten (map (fn [[parentType field]] [field (get parent field)]) (partition 2 deps)))))
+(defn create-constraints
+  [constraints deps parent]
+  (concat constraints (flatten (map (fn [[parentType field]] [field (get parent field)]) (partition 2 deps)))))
 
+(defn- iterate-query
+  [{type :type constraints :constraints fields :fields :or {fields [:all]}} parent]
+   (let [handler (get @handlers type) deps (get @deps type)]
+      (if handler
+          (filter-result (apply handler [(create-constraints constraints deps parent) fields]) fields)
+          (throw (IllegalArgumentException. (str "No handler for type" type))))))
 
 (defn geewiz-query
     "Executes geewiz query. Queries should be constructed with (geewiz.parser/parse string)"
-    ([query] (geewiz-query query {}))
-    ([{type :type constraints :constraints fields :fields :or {fields [:all]}} parent]
-     (let [handler (get @handlers type) deps (get @deps type)]
-        (if handler
-            (filter-result (apply handler [(create-constraints constraints deps parent) fields]) fields)
-            (throw (IllegalArgumentException. (str "No handler for type" type)))))))
+    [query]
+    (iterate-query
+      (if (string? query) (parser/parse query) query)
+      {}))

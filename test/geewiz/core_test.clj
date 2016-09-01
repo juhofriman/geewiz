@@ -20,13 +20,13 @@
 (deftest testing-query
     (testing "throws for unknown type"
         ; No handler for :animal
-        (is (thrown? IllegalArgumentException (geewiz-query {:type :animal}))))
+        (is (thrown? IllegalArgumentException (geewiz-query "{ animal() {}}"))))
 
     (testing "executing handler via query"
         ; just a dummy handler returning something predictable
         (geewiz-handler :animal (fn [_ _] {:type :dog :name "Rufus"}))
 
-        (is (= "Rufus" (:name (geewiz-query {:type :animal :fields [:name]})))))
+        (is (= "Rufus" (:name (geewiz-query "{animal(id: 123) { name }}")))))
 
     (testing "executing handler with constraints"
 
@@ -35,7 +35,16 @@
           (fn [[constraintKey constraintValue] _]
             {:type :dog :id constraintValue :name "Rufus"}))
 
-        (is (= 123 (:id (geewiz-query {:type :animal :constraints [:id 123] :fields [:id]})))))
+        (is (= 123 (:id (geewiz-query "{ animal(id: 123) { id, name }}")))))
+
+    (testing "executing query as string (this should be the the way to execute quesries)"
+
+        (geewiz-handler
+          :animal
+          (fn [[constraintKey constraintValue] _]
+            {:type :dog :id constraintValue :name "Rufus"}))
+
+        (is (= 123 (:id (geewiz-query "{ animal(id: 123) {id}} ")))))
 
     (testing "executing handler with constraints and fields"
 
@@ -44,7 +53,7 @@
           (fn [[constraintKey constraintValue] fields]
             {:type :dog :id constraintValue :name "Rufus" :breed "Terrier"}))
 
-        (let [result (geewiz-query {:type :animal :constraints [:id 123] :fields [:name :breed]})]
+        (let [result (geewiz-query "{ animal(id: 123) { name, breed }}")]
             (is (= #{:name :breed} (set (keys result))))))
 
     (testing "executing nested dependent queries"
@@ -57,7 +66,7 @@
           [:zoo :id]
           (fn [[_ id] _] {:streetAddress "Something" :postalCode 12345 :id id}))
 
-        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :address :constraints [] :fields [:id :streetAddress :postalCode]}]})]
+        (let [result (geewiz-query "{ zoo(id: 1234) { name, id, address() { streetAddress, postalCode, id} }}")]
             (is (= "Korkeasaari" (:name result)))
             (is (= "Something" (get-in result [:address :streetAddress])))
             (is (= 1234 (get-in result [:address :id])))
@@ -77,7 +86,7 @@
              {:name "John" :breed "Pig"},
              {:name "Eric" :breed "Mule"}]))
 
-        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :animals :constraints [] :fields [:name]}]})]
+        (let [result (geewiz-query "{ zoo(id: 1234) {name, id, animals(){ name, breed }}}")]
           (is (= (sequential? (get result :animals)))))))
 
 (deftest registering-types
