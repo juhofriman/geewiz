@@ -29,20 +29,33 @@
         (is (= "Rufus" (:name (geewiz-query {:type :animal :fields [:name]})))))
 
     (testing "executing handler with constraints"
-        (geewiz-handler :animal (fn [[constraintKey constraintValue] _] {:type :dog :id constraintValue :name "Rufus"}))
+
+        (geewiz-handler
+          :animal
+          (fn [[constraintKey constraintValue] _]
+            {:type :dog :id constraintValue :name "Rufus"}))
 
         (is (= 123 (:id (geewiz-query {:type :animal :constraints [:id 123] :fields [:id]})))))
 
     (testing "executing handler with constraints and fields"
-        (geewiz-handler :animal (fn [[constraintKey constraintValue] fields] {:type :dog :id constraintValue :name "Rufus" :breed "Terrier"}))
+
+        (geewiz-handler
+          :animal
+          (fn [[constraintKey constraintValue] fields]
+            {:type :dog :id constraintValue :name "Rufus" :breed "Terrier"}))
 
         (let [result (geewiz-query {:type :animal :constraints [:id 123] :fields [:name :breed]})]
             (is (= #{:name :breed} (set (keys result))))))
 
     (testing "executing nested dependent queries"
 
-        (geewiz-handler :zoo (fn [_ _] {:name "Korkeasaari" :id 1234}))
-        (geewiz-handler :address [:zoo :id] (fn [[_ id] _] {:streetAddress "Something" :postalCode 12345 :id id}))
+        (geewiz-handler
+          :zoo (fn [_ _] {:name "Korkeasaari" :id 1234}))
+
+        (geewiz-handler
+          :address
+          [:zoo :id]
+          (fn [[_ id] _] {:streetAddress "Something" :postalCode 12345 :id id}))
 
         (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :address :constraints [] :fields [:id :streetAddress :postalCode]}]})]
             (is (= "Korkeasaari" (:name result)))
@@ -51,11 +64,21 @@
             (is (= 12345 (get-in result [:address :postalCode])))))
 
     (testing "handlers returning collections"
-        (geewiz-handler :zoo (fn [_ _] {:name "Korkeasaari" :id 1234}))
-        (geewiz-handler :animal [:zoo :id] (fn [[_ id] _] [{:name "Dumbo" :breed "Elephant"}, {:name "John" :breed "Pig"}, {:name "Eric" :breed "Mule"}]))
 
-        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :animal :constraints [] :fields [:name]}]})]
-          (is (= (seq? (get result :animal)))))))
+        (geewiz-handler
+          :zoo
+          (fn [_ _] {:name "Korkeasaari" :id 1234}))
+
+        (geewiz-handler
+          :animals
+          [:zoo :id]
+          (fn [[_ id] _]
+            [{:name "Dumbo" :breed "Elephant"},
+             {:name "John" :breed "Pig"},
+             {:name "Eric" :breed "Mule"}]))
+
+        (let [result (geewiz-query {:type :zoo :constraints [] :fields [:name {:type :animals :constraints [] :fields [:name]}]})]
+          (is (= (sequential? (get result :animals)))))))
 
 (deftest registering-types
     (testing "no types is no types"
