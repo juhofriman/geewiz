@@ -1,8 +1,7 @@
 (ns h2-geewiz.core
   (:require
     [clojure.java.jdbc :as sql]
-    [geewiz.core :as geewiz]
-    [geewiz.parser :as geewiz-parser]))
+    [geewiz.core :as geewiz]))
 
 (def db-spec
   {:classname "org.h2.Driver"
@@ -22,6 +21,7 @@
     (create-table :animal
       [:id "bigint primary key auto_increment"]
       [:name "varchar(500)"]
+      [:fav_food "varchar(500)"]
       [:id_zoo "integer references zoo(id)"]))
 
     (sql/insert-records :zoo
@@ -29,8 +29,8 @@
       {:id 2 :name "Berlin Zoo"})
 
     (sql/insert-records :animal
-      {:name "Leila Leijona" :id_zoo 1}
-      {:name "Simo Simpanssi" :id_zoo 1}))
+      {:name "Leila Leijona" :fav_food "Humans" :id_zoo 1}
+      {:name "Simo Simpanssi" :fav_food "Leaves" :id_zoo 1}))
 
 (defn get-zoo [[_ id] _]
   (sql/with-connection db-spec
@@ -51,4 +51,4 @@
 
 (defn execute
   [query]
-  (geewiz/geewiz-query (geewiz-parser/parse query)))
+  (geewiz/geewiz-query  query))

@@ -11,6 +11,12 @@
         (is (= {:type :animal :constraints [:id 123 :name "jeppe"] :fields [:name :breed]}
                (parse "{ animal(id: 123, name: 'jeppe') { name, breed }}"))))
 
+    (testing "allowed special characters in names"
+        (is (= {:type :animal :constraints [] :fields [ :fav_food ]}
+               (parse "{ animal() { fav_food }}")))
+        (is (= {:type :animal :constraints [] :fields [ :fav-food ]}
+               (parse "{ animal() { fav-food }}"))))
+
     (testing "nested"
         (is (= {:type
                 :animal
