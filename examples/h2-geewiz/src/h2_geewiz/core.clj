@@ -18,19 +18,40 @@
     (create-table :zoo
       [:id "bigint primary key auto_increment"]
       [:name "varchar(500)"])
+    (create-table :attendant
+      [:id "bigint primary key auto_increment"]
+      [:name "varchar(500)"]
+      [:salary "integer"]
+      [:id_zoo "integer references zoo(id)"])
     (create-table :animal
       [:id "bigint primary key auto_increment"]
       [:name "varchar(500)"]
       [:fav_food "varchar(500)"]
-      [:id_zoo "integer references zoo(id)"]))
+      [:id_zoo "integer references zoo(id)"]
+      [:id_attendant "integer references attendant(id)"])
+
 
     (sql/insert-records :zoo
       {:id 1 :name "Korkeasaari"}
       {:id 2 :name "Berlin Zoo"})
 
+    (sql/insert-records :attendant
+      {:id 1 :name "Kiivari Hippalinen" :salary 1283 :id_zoo 1}
+      {:id 2 :name "Simo Simpulainen" :salary 2345 :id_zoo 1}
+      {:id 3 :name "Juili Kilupainen" :salary 6252 :id_zoo 1}
+      {:id 4 :name "Horst Zuggenberg" :salary 1543 :id_zoo 2}
+      {:id 5 :name "Adolf Arhip" :salary 1324 :id_zoo 2}
+      {:id 6 :name "Liza Murkel" :salary 2134 :id_zoo 2}))
+
     (sql/insert-records :animal
-      {:name "Leila Leijona" :fav_food "Humans" :id_zoo 1}
-      {:name "Simo Simpanssi" :fav_food "Leaves" :id_zoo 1}))
+      {:name "Leila Leijona" :fav_food "Humans" :id_zoo 1 :id_attendant 1}
+      {:name "Kari Karhu" :fav_food "Berries" :id_zoo 1 :id_attendant 1}
+      {:name "Marko Maasika" :fav_food "Dirst" :id_zoo 1 :id_attendant 2}
+      {:name "Kalle Kirahvi" :fav_food "Leaves" :id_zoo 1 :id_attendant 3}
+      {:name "Lion" :fav_food "Humans" :id_zoo 2 :id_attendant 4}
+      {:name "Porcupine" :fav_food "Humans" :id_zoo 2 :id_attendant 5}
+      {:name "Elephant" :fav_food "Humans" :id_zoo 2 :id_attendant 6}
+      {:name "Rhinoceros" :fav_food "Dunno" :id_zoo 2 :id_attendant 5}))
 
 (defn get-zoo [[_ id] _]
   (sql/with-connection db-spec
@@ -44,11 +65,26 @@
                   ["select * from animal where id_zoo = ?" zoo-id]
                   (doall res))))
 
+(defn get-attendants-for-zoo [[_ zoo-id] _]
+  (sql/with-connection db-spec
+    (sql/with-query-results res
+                  ["select * from attendant where id_zoo = ?" zoo-id]
+                  (doall res))))
+
+(defn get-attendant-of-animal [[_ id] _]
+  (sql/with-connection db-spec
+    (sql/with-query-results res
+                  ["select * from attendant where id = ?" id]
+                  (first (doall res)))))
 
 (geewiz/geewiz-handler :zoo get-zoo)
 
-(geewiz/geewiz-handler :animal [:zoo :id] get-animals-of-zoo)
+(geewiz/geewiz-handler :animals [:zoo :id] get-animals-of-zoo)
+
+(geewiz/geewiz-handler :attendantforanimal [:animal :id_attendant] get-attendant-of-animal)
+
+(geewiz/geewiz-handler :attendantsforzoo [:zoo :id] get-attendants-for-zoo)
 
 (defn execute
   [query]
-  (geewiz/geewiz-query  query))
+  (geewiz/geewiz-query query))
