@@ -3,29 +3,36 @@
 
 (def handlers (atom {}))
 (def types (atom {}))
-(def deps (atom {}))
 
-(def g {
-  :zoo {
-    :handler (fn [])
-  }
-  :party {
-    :handler (fn [])
-  }
-  :people {
-    :handler (fn [])
-    :deps {
-      :zoo {
-        :handler (fn [])
-        :arguments [:id]
-      }
-      :party {
-        :handler (fn [])
-        :arguments [:id]
-      }
-    }
-  }
-})
+;; Example of handlers data structure
+; (def g {
+;  :zoo {
+;     :handler (fn [])
+;   }
+;   :party {
+;     :handler (fn [])
+;   }
+;   :people {
+;     :handler (fn [])
+;     :deps {
+;       :zoo {
+;         :handler (fn [])
+;         :arguments [:id]
+;       }
+;       :party {
+;         :handler (fn [])
+;         :arguments [:id]
+;       }
+;     }
+;   }
+; })
+
+; Example of internal query
+; {:type :zoo,
+;  :constraints [:id 1],
+;  :fields
+;     [:name
+;      {:type :animal, :constraints [], :fields [:breed]}]}
 
 (defn- arg-count
     "Returns arity of f"
@@ -63,48 +70,50 @@
     []
     (do
         (reset! handlers {})
-        (reset! deps {})
         (reset! types {})))
 
-(declare iterate-query)
 
-(defn- apply-sub-handlers
-  [parent-type result sub-handlers]
-  (reduce
-    (fn [acc {type :type :as handler}]
-      (assoc acc type (iterate-query handler parent-type result)))
-    result
-    sub-handlers))
+(defn get-typedef
+  "Returns typedef for type"
+  [type]
+  (if-let [h (get @handlers type)]
+    h
+    (throw (IllegalArgumentException. (str "No handler for type " type)))))
 
-(defn filter-result-object
-    [type result fields]
-    (let [all-fields (map (fn [a] (if (associative? a) (:type a) a)) fields)]
-        (select-keys (apply-sub-handlers type result (filter associative? fields)) all-fields)))
+; We have mutual recursion here
+(declare execute-geewiz-handler)
 
-(defn filter-result
-  [type result fields]
-  (if (sequential? result)
-    (map #(filter-result-object type % fields) result)
-    (filter-result-object type result fields)))
+(defn prepare-nested-query
+  [parent-type parent {t :type a :handler-arguments f :fields}]
+  (let [type-def (get-typedef t)
+        handler (get-in type-def [:deps parent-type :handler])
+        arguments (partition 2 (get-in type-def [:deps parent-type :arguments]))]
+    (partial execute-geewiz-handler t handler (concat a (mapcat #(vector (first %) (get parent (second %))) arguments)) f)))
 
-(defn create-constraints
-  [constraints deps parent]
-  (concat constraints (flatten (map (fn [[parentType field]] [field (get parent field)]) (partition 2 deps)))))
+(defn process-result
+  [type handler-result fields]
+      (into
+        {}
+        (for [f fields]
+          (if (associative? f)
+            ; It's a nested query for type
+            (let [sub-type (:type f)]
+              [sub-type (apply (prepare-nested-query type handler-result f) [])])
 
-(defn- iterate-query
-  [{type :type constraints :constraints fields :fields :or {fields [:all]}} parent-type parent]
-   (let [type-def (get @handlers type)
-         handler (if parent-type (get-in type-def [:deps parent-type :handler]) (:handler type-def))
-         deps (if parent-type (get-in type-def [:deps parent-type :arguments]) [])]
-      (if handler
-          (filter-result type (apply handler [(create-constraints constraints deps parent) fields]) fields)
-          (throw (IllegalArgumentException. (str "No handler for type" type))))))
+            ; it's a captured keyword
+            [f (get handler-result f)]))))
 
+(defn execute-geewiz-handler
+  [type handler handler-arguments fields]
+  (let [handler-result (apply handler [handler-arguments fields])]
+    (if (sequential? handler-result)
+      ; Process collection of entities
+      (map #(process-result type % fields) handler-result)
+      ; Process single entity
+      (process-result type handler-result fields))))
 
 (defn geewiz-query
-    "Executes geewiz query. Queries should be constructed with (geewiz.parser/parse string)"
+    "Executes query string"
     [query]
-    (iterate-query
-      (if (string? query) (parser/parse query) query)
-      nil
-      nil))
+    (let [{t :type a :handler-arguments f :fields} (parser/parse query)]
+      (execute-geewiz-handler t (-> (get-typedef t) :handler) a f)))

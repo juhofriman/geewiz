@@ -87,7 +87,8 @@
              {:name "Eric" :breed "Mule"}]))
 
         (let [result (geewiz-query "{ zoo(id: 1234) {name, id, animals(){ name, breed }}}")]
-          (is (= (sequential? (get result :animals))))))
+          (is (sequential? (get result :animals)))
+          (is (= "Dumbo" (-> (get result :animals) first :name)))))
 
     (testing "handlers must support different contexts (wat?)"
 

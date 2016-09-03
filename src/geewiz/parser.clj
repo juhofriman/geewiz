@@ -76,7 +76,7 @@ integerValue = INTEGER
 (defn- map-to-geewiz
     [[_ [_ entityName] constraints fields]]
     {:type (keyword entityName)
-     :constraints (map-constraints constraints)
+     :handler-arguments (map-constraints constraints)
      :fields (map-fields fields)})
 
 (defn parse-raw

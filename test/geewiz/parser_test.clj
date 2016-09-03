@@ -4,26 +4,26 @@
 
 (deftest syntax-tests
     (testing "simple"
-        (is (= {:type :animal :constraints [] :fields []}
+        (is (= {:type :animal :handler-arguments [] :fields []}
                (parse "{ animal() {}}")))
-        (is (= {:type :animal :constraints [:id 123] :fields [:breed]}
+        (is (= {:type :animal :handler-arguments [:id 123] :fields [:breed]}
                (parse "{ animal(id: 123) { breed }}")))
-        (is (= {:type :animal :constraints [:id 123 :name "jeppe"] :fields [:name :breed]}
+        (is (= {:type :animal :handler-arguments [:id 123 :name "jeppe"] :fields [:name :breed]}
                (parse "{ animal(id: 123, name: 'jeppe') { name, breed }}"))))
 
     (testing "allowed special characters in names"
-        (is (= {:type :animal :constraints [] :fields [ :fav_food ]}
+        (is (= {:type :animal :handler-arguments [] :fields [ :fav_food ]}
                (parse "{ animal() { fav_food }}")))
-        (is (= {:type :animal :constraints [] :fields [ :fav-food ]}
+        (is (= {:type :animal :handler-arguments [] :fields [ :fav-food ]}
                (parse "{ animal() { fav-food }}"))))
 
     (testing "nested"
         (is (= {:type
                 :animal
-                :constraints [:id 1]
+                :handler-arguments [:id 1]
                 :fields [
                     :name
                     {:type :legs
-                     :constraints []
+                     :handler-arguments []
                      :fields [:headLeft :headRight :tailLeft :tailRight]}]}
                (parse "{ animal(id: 1) { name, legs() { headLeft, headRight, tailLeft, tailRight }}}")))))
