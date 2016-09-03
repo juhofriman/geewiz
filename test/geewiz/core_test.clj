@@ -87,7 +87,45 @@
              {:name "Eric" :breed "Mule"}]))
 
         (let [result (geewiz-query "{ zoo(id: 1234) {name, id, animals(){ name, breed }}}")]
-          (is (= (sequential? (get result :animals)))))))
+          (is (= (sequential? (get result :animals))))))
+
+    (testing "handlers must support different contexts (wat?)"
+
+        (geewiz-handler
+          :zoo
+          (fn [_ _] {:name "Korkeasaari" :id 999}))
+
+        (geewiz-handler
+          :political-party
+          (fn [_ _] {:name "Intolerants" :id 111}))
+
+        (geewiz-handler
+          :people
+          (fn [[_ id] _] [{:name "John" :id 1 :id-zoo id} {:name "Mark" :id 2 :id-party id}]))
+
+        (geewiz-handler
+          :people [:zoo :id]
+          (fn [[_ id-zoo] _] [{:name "John" :id 1 :id-zoo id-zoo}]))
+
+        (geewiz-handler
+          :people [:political-party :id]
+          (fn [[_ id-party] _] [{:name "Mark" :id 2 :id-party id-party}]))
+
+        ; Should support all of these ->
+        ; { people() {}}
+        ; { zoo(id: 999) { people() { name }}}
+        ; { political-party(id: 111) { people() { name }}}
+
+        (let [result (geewiz-query "{ people() { name }}")]
+          (is (= (sequential? result))))
+
+        (let [result (geewiz-query "{ zoo(id: 999) { people() { name, id-zoo }}}")]
+          (is (= "John" (:name (first (:people result)))))
+          (is (= 999  (:id-zoo (first (:people result))))))
+
+        (let [result (geewiz-query "{ political-party() { name, people() { name, id-party }}}")]
+          (is (= "Mark" (:name (first (:people result)))))
+          (is (= 111 (:id-party (first (:people result))))))))
 
 (deftest registering-types
     (testing "no types is no types"
