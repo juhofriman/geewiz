@@ -3,6 +3,8 @@
             [geewiz.parser :refer :all]))
 
 (deftest syntax-tests
+    (testing "throws"
+        (is (thrown? IllegalArgumentException (parse "24frvr"))))
     (testing "simple"
         (is (= {:type :animal :handler-arguments [] :fields []}
                (parse "{ animal() {}}")))

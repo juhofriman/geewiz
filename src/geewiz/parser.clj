@@ -82,7 +82,10 @@ integerValue = INTEGER
 (defn parse-raw
     "Parses input raw with instaparse. Should be used from outside only for debugging."
     [i]
-    (ql-parser i))
+    (let [p (ql-parser i)]
+      (if (map? p)
+        (throw (IllegalArgumentException. (str "Error parsing" p)))
+        p)))
 
 (defn parse
     "Parses input to geewiz internal query structure"
