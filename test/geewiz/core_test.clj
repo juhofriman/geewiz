@@ -132,18 +132,30 @@
     (testing "no types is no types"
         (is (empty? (geewiz-types))))
 
-    (testing "registering static types"
-        (geewiz-register-type :dog {:breed "Breed of dog" :name "Name of dog"})
+    (testing "registering types"
 
-        (let [types (geewiz-types) dogtype (get types :dog)]
-            (is (contains? types :dog))
-            (is (contains? dogtype :breed))
-            (is (contains? dogtype :name))))
+        (geewiz-handler
+          :zoo
+          "Zoo is a the place for imprisoning animals"
+          (fn [_ _] {}))
 
-    (testing "registering dynamic types"
-        (geewiz-register-type :dog (fn [] {:breed "Breed of dog" :name "Name of dog"}))
+        (geewiz-handler
+          :animal
+          "Animal is an animal"
+          (fn [_ _] {}))
 
-        (let [types (geewiz-types) dogtype (get types :dog)]
-            (is (contains? types :dog))
-            (is (contains? dogtype :breed))
-            (is (contains? dogtype :name)))))
+        (geewiz-handler
+          :animal
+          "Animal in zoo joinen with zoo id"
+          [:zoo :id]
+          (fn [_ _] {}))
+
+        (let [types (geewiz-types)
+              zootype (get types :zoo)
+              animaltype (get types :animal)
+              animal-in-zoo (get-in types [:animal :deps :zoo])]
+            (is (contains? types :zoo))
+            (is (contains? types :animal))
+            (is (= "Zoo is a the place for imprisoning animals" (:description zootype)))
+            (is (= "Animal is an animal" (:description animaltype)))
+            (is (= "Animal in zoo joinen with zoo id" (:description animal-in-zoo))))))

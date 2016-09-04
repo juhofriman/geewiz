@@ -92,15 +92,15 @@
                   ["select * from attendant where id = ?" id]
                   (first (doall res)))))
 
-(geewiz/geewiz-handler :zoo get-zoo)
+(geewiz/geewiz-handler :zoo "Zoo is a zoo" get-zoo)
 
-(geewiz/geewiz-handler :animal get-animal)
+(geewiz/geewiz-handler :animal "Animal is an animal" get-animal)
 
-(geewiz/geewiz-handler :animal [:zoo :id] get-animals-of-zoo)
+(geewiz/geewiz-handler :animal "Animal in zoo is an animal in zoo" [:zoo :id] get-animals-of-zoo)
 
-(geewiz/geewiz-handler :attendant [:animal :id_attendant] get-attendant-of-animal)
+(geewiz/geewiz-handler :attendant "Attendant for animal" [:animal :id_attendant] get-attendant-of-animal)
 
-(geewiz/geewiz-handler :attendant [:zoo :id] get-attendants-for-zoo)
+(geewiz/geewiz-handler :attendant "Attendants in zoo" [:zoo :id] get-attendants-for-zoo)
 
 (defn execute
   [query]

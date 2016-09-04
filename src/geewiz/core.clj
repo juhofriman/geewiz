@@ -42,36 +42,32 @@
 
 (defn geewiz-handler
     "Registers handler for type"
-    ([entity body] (geewiz-handler entity [] body))
-    ([entity [dependent-entity & arguments :as dependencies] body]
+    ([entity body] (geewiz-handler entity "" [] body))
+    ([entity desc-or-deps body]
+      (if (string? desc-or-deps)
+        (geewiz-handler entity desc-or-deps [] body)
+        (geewiz-handler entity "" desc-or-deps body)))
+    ([entity description [dependent-entity & arguments :as dependencies] body]
         (if (= 2 (arg-count body))
             (if (empty? dependencies)
-              (swap! handlers assoc-in [entity :handler] body)
+              (do
+                (swap! handlers assoc-in [entity :handler] body)
+                (swap! handlers assoc-in [entity :description] description))
               (do
                 (swap! handlers assoc-in [entity :deps dependent-entity :handler] body)
+                (swap! handlers assoc-in [entity :deps dependent-entity :description] description)
                 (swap! handlers assoc-in [entity :deps dependent-entity :arguments] dependencies)))
             (throw (IllegalArgumentException.
                 (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector."))))))
 
-(defn geewiz-register-type
-    "Register type"
-    [type description]
-    (swap! types assoc type description))
-
 (defn geewiz-types
     "Returns all registered types"
     []
-    (reduce (fn [acc [k v]]
-        (if (fn? v)
-            (assoc acc k (apply v []))
-            (assoc acc k v))) {} @types))
+    @handlers)
 
 (defn reset-handlers!
     []
-    (do
-        (reset! handlers {})
-        (reset! types {})))
-
+    (reset! handlers {}))
 
 (defn get-typedef
   "Returns typedef for type"
