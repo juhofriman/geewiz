@@ -5,7 +5,7 @@
 
 Geewiz is one mans humble attempt to build utility library for constructing and modeling [GraphQL](http://graphql.org/) like interfaces and services. It's at really early stage and does support only fetching data - mutations will eventually be implemented.
 
-The whole "great idea" is using geewiz should be datasource agnostic. It can be backed with relational database, nosql database, xml, json, in memory data and so on. It's all about modeling and creating functions to materialize that data matching the model.
+The whole "great idea" is that using geewiz should be datasource agnostic and description of the model (what kind of queries one can make) should be generated on the fly from the code. Geewiz can be backed with relational database, nosql database, xml, json, in memory data and so forth. It's all about modeling and creating functions to materialize that data matching the model.
 
 ## Usage
 
