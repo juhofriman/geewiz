@@ -14,18 +14,16 @@
                (parse "{ animal(id: 123, name: 'jeppe') { name, breed }}"))))
 
     (testing "allowed special characters in names"
-        (is (= {:type :animal :handler-arguments [] :fields [ :fav_food ]}
+        (is (= {:type :animal :handler-arguments [] :fields [ :fav_food]}
                (parse "{ animal() { fav_food }}")))
-        (is (= {:type :animal :handler-arguments [] :fields [ :fav-food ]}
+        (is (= {:type :animal :handler-arguments [] :fields [ :fav-food]}
                (parse "{ animal() { fav-food }}"))))
 
     (testing "nested"
-        (is (= {:type
-                :animal
-                :handler-arguments [:id 1]
-                :fields [
-                    :name
-                    {:type :legs
-                     :handler-arguments []
-                     :fields [:headLeft :headRight :tailLeft :tailRight]}]}
+        (is (= { :type :animal
+                 :handler-arguments [:id 1]
+                 :fields [ :name
+                           { :type :legs
+                             :handler-arguments []
+                             :fields [:headLeft :headRight :tailLeft :tailRight]}]}
                (parse "{ animal(id: 1) { name, legs() { headLeft, headRight, tailLeft, tailRight }}}")))))

@@ -52,15 +52,15 @@
       {:id 5 :name "Adolf Arhip" :salary 1324 :id_zoo 2}
       {:id 6 :name "Liza Murkel" :salary 2134 :id_zoo 2}))
 
-    (sql/insert-records :animal
-      {:id 1 :name "Leila Leijona" :fav_food "Humans" :id_zoo 1 :id_attendant 1}
-      {:id 2 :name "Kari Karhu" :fav_food "Berries" :id_zoo 1 :id_attendant 1}
-      {:id 3 :name "Marko Maasika" :fav_food "Dirt" :id_zoo 1 :id_attendant 2}
-      {:id 4 :name "Kalle Kirahvi" :fav_food "Leaves" :id_zoo 1 :id_attendant 3}
-      {:id 5 :name "Lion" :fav_food "Humans" :id_zoo 2 :id_attendant 4}
-      {:id 6 :name "Porcupine" :fav_food "Humans" :id_zoo 2 :id_attendant 5}
-      {:id 7 :name "Elephant" :fav_food "Humans" :id_zoo 2 :id_attendant 6}
-      {:id 8 :name "Rhinoceros" :fav_food "Dunno" :id_zoo 2 :id_attendant 5}))
+  (sql/insert-records :animal
+    {:id 1 :name "Leila Leijona" :fav_food "Humans" :id_zoo 1 :id_attendant 1}
+    {:id 2 :name "Kari Karhu" :fav_food "Berries" :id_zoo 1 :id_attendant 1}
+    {:id 3 :name "Marko Maasika" :fav_food "Dirt" :id_zoo 1 :id_attendant 2}
+    {:id 4 :name "Kalle Kirahvi" :fav_food "Leaves" :id_zoo 1 :id_attendant 3}
+    {:id 5 :name "Lion" :fav_food "Humans" :id_zoo 2 :id_attendant 4}
+    {:id 6 :name "Porcupine" :fav_food "Humans" :id_zoo 2 :id_attendant 5}
+    {:id 7 :name "Elephant" :fav_food "Humans" :id_zoo 2 :id_attendant 6}
+    {:id 8 :name "Rhinoceros" :fav_food "Dunno" :id_zoo 2 :id_attendant 5}))
 
 (defn get-zoo [[_ id] _]
   (sql/with-connection db-spec

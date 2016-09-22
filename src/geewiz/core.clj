@@ -44,21 +44,21 @@
     "Registers handler for type"
     ([entity body] (geewiz-handler entity "" [] body))
     ([entity desc-or-deps body]
-      (if (string? desc-or-deps)
-        (geewiz-handler entity desc-or-deps [] body)
-        (geewiz-handler entity "" desc-or-deps body)))
+     (if (string? desc-or-deps)
+       (geewiz-handler entity desc-or-deps [] body)
+       (geewiz-handler entity "" desc-or-deps body)))
     ([entity description [dependent-entity & arguments :as dependencies] body]
-        (if (= 2 (arg-count body))
-            (if (empty? dependencies)
-              (do
-                (swap! handlers assoc-in [entity :handler] body)
-                (swap! handlers assoc-in [entity :description] description))
-              (do
-                (swap! handlers assoc-in [entity :deps dependent-entity :handler] body)
-                (swap! handlers assoc-in [entity :deps dependent-entity :description] description)
-                (swap! handlers assoc-in [entity :deps dependent-entity :arguments] dependencies)))
-            (throw (IllegalArgumentException.
-                (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector."))))))
+     (if (= 2 (arg-count body))
+         (if (empty? dependencies)
+           (do
+             (swap! handlers assoc-in [entity :handler] body)
+             (swap! handlers assoc-in [entity :description] description))
+           (do
+             (swap! handlers assoc-in [entity :deps dependent-entity :handler] body)
+             (swap! handlers assoc-in [entity :deps dependent-entity :description] description)
+             (swap! handlers assoc-in [entity :deps dependent-entity :arguments] dependencies)))
+         (throw (IllegalArgumentException.
+                 (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector."))))))
 
 (defn geewiz-types
     "Returns all registered types"
@@ -88,16 +88,16 @@
 
 (defn process-result
   [type handler-result fields]
-      (into
-        {}
-        (for [f fields]
-          (if (associative? f)
+  (into
+    {}
+    (for [f fields]
+      (if (associative? f)
             ; It's a nested query for type
-            (let [sub-type (:type f)]
-              [sub-type (apply (prepare-nested-query type handler-result f) [])])
+        (let [sub-type (:type f)]
+          [sub-type (apply (prepare-nested-query type handler-result f) [])])
 
             ; it's a captured keyword
-            [f (get handler-result f)]))))
+        [f (get handler-result f)]))))
 
 (defn execute-geewiz-handler
   [type handler handler-arguments fields]
