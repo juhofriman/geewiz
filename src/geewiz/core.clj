@@ -60,10 +60,14 @@
          (throw (IllegalArgumentException.
                  (str "Geewiz handler must be fn of 2 args. First constraints vector second fields vector."))))))
 
+(defn type-description
+  [type]
+  {:description (:description type)})
+
 (defn geewiz-types
     "Returns all registered types"
     []
-    @handlers)
+    (into {} (for [[type d] @handlers] [type (type-description d)])))
 
 (defn reset-handlers!
     []

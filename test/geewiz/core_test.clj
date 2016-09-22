@@ -139,19 +139,5 @@
           "Zoo is a the place for imprisoning animals"
           (fn [_ _] {}))
 
-        (geewiz-handler
-          :animal
-          "Animal is an animal"
-          (fn [_ _] {}))
-
-        (geewiz-handler
-          :animal
-          "Animal in zoo joined with zoo id"
-          [:zoo :id]
-          (fn [_ _] {}))
-
-        (let [types (geewiz-types)
-              zootype (get types :zoo)
-              animaltype (get types :animal)
-              animal-in-zoo (get-in types [:animal :deps :zoo])])))
-                
+        (is (contains? (geewiz-types) :zoo))
+        (is (some? (get-in (geewiz-types) [:zoo :description])))))                                        
